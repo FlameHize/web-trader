@@ -139,8 +139,10 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import AccountInfo from '../components/AccountInfo.vue'
-import PositionInfo from '../components/PositionInfo.vue'
+
+import { defineAsyncComponent } from 'vue'
+const AccountInfo = defineAsyncComponent(() => import('../components/AccountInfo.vue'))
+const PositionInfo = defineAsyncComponent(() => import('../components/PositionInfo.vue'))
 
 const router = useRouter()
 
