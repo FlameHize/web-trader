@@ -1,11 +1,11 @@
 <template>
   <div id="app">
-    <Login />
+    <!-- Route outlet, the component matched by the route will be rendered here -->
+    <router-view />
   </div>
 </template>
 
 <script setup lang="ts">
-import Login from './components/Login.vue'
 </script>
 
 <style>
@@ -25,6 +25,5 @@ body {
 
 #app {
   min-height: 100vh;
-  padding: 20px;
 }
 </style>

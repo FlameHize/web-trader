@@ -84,8 +84,8 @@ const handleLogin = async() => {
         )
         // save token data into localStorage.
         const token = response.data.access_token
-        localStorage.setItem('token', token)
-        console.log('login success, token has been saved')
+        localStorage.setItem('vnpy_token', token)
+        localStorage.setItem('vnpy_username', username.value)
         router.push('/system')
     } catch(err: any) {
         console.error('login failed: ', err)
