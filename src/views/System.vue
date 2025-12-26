@@ -118,6 +118,9 @@
             <template v-else-if="activeMenu === 'position'">
               <PositionInfo :data="currentData" />
             </template>
+            <template v-else-if="activeMenu === 'contract'">
+              <ContractInfo :contracts="currentData" />
+            </template>
             <template v-else>
               <pre class="json-data">{{ JSON.stringify(currentData, null, 2) }}</pre>
             </template>
@@ -143,6 +146,7 @@ import axios from 'axios'
 import { defineAsyncComponent } from 'vue'
 const AccountInfo = defineAsyncComponent(() => import('../components/AccountInfo.vue'))
 const PositionInfo = defineAsyncComponent(() => import('../components/PositionInfo.vue'))
+const ContractInfo = defineAsyncComponent(() => import('../components/ContractInfo.vue'))
 
 const router = useRouter()
 
@@ -297,6 +301,7 @@ const fetchContracts = async () => {
   activeMenu.value = 'contract'
   const data = await apiRequest('contract')
   if (data) currentData.value = data
+  console.log(data)
 }
 
 // 刷新数据
@@ -324,9 +329,18 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
+/* 全局重置 */
+:deep(*) {
+  box-sizing: border-box;
+}
+
 .system-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
-  height: 100vh;
   background: #f5f5f5;
 }
 
@@ -337,11 +351,14 @@ const handleLogout = () => {
   color: white;
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .sidebar-header {
   padding: 20px;
   border-bottom: 1px solid #34495e;
+  flex-shrink: 0;
 }
 
 .sidebar-header h3 {
@@ -452,7 +469,9 @@ const handleLogout = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
   overflow: hidden;
+  width: calc(100vw - 280px); /* 减去侧边栏宽度 */
 }
 
 .content-header {
@@ -462,6 +481,7 @@ const handleLogout = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .content-header h2 {
@@ -500,6 +520,7 @@ const handleLogout = () => {
   flex: 1;
   padding: 30px;
   overflow-y: auto;
+  min-height: 0; /* 重要：允许flex item收缩 */
 }
 
 /* 加载状态 */
@@ -508,7 +529,7 @@ const handleLogout = () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 300px;
+  height: 100%;
 }
 
 .spinner {
@@ -531,6 +552,9 @@ const handleLogout = () => {
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .data-header {
@@ -540,6 +564,13 @@ const handleLogout = () => {
   margin-bottom: 20px;
   padding-bottom: 15px;
   border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+.data-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .refresh-btn {
@@ -564,6 +595,8 @@ const handleLogout = () => {
   font-family: 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.4;
+  height: 100%;
+  overflow-y: auto;
 }
 
 /* 欢迎消息 */
@@ -572,7 +605,7 @@ const handleLogout = () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 300px;
+  height: 100%;
   text-align: center;
   color: #7f8c8d;
 }
@@ -585,5 +618,21 @@ const handleLogout = () => {
 .welcome-message h3 {
   color: #2c3e50;
   margin-bottom: 10px;
+}
+
+/* 确保表格内容可以滚动 */
+:deep(.contract-table-container) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(.contract-table) {
+  flex: 1;
+  min-height: 0;
+}
+
+:deep(table) {
+  height: 100%;
 }
 </style>
