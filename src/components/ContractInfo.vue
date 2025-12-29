@@ -1,5 +1,21 @@
 <template>
   <div class="contract-table-container">
+    <!-- 搜索框 -->
+    <div class="search-container">
+      <div class="search-input-group">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="输入合约代码或者交易所,留空则查询所有合约"
+          class="search-input"
+          @input="onSearchInput"
+        />
+        <button @click="clearSearch" class="clear-btn" v-if="searchQuery">
+        ×
+        </button>
+    </div>
+
+    </div>
     <!-- 表格容器 -->
     <div class="table-wrapper">
       <table class="contract-table">
@@ -64,7 +80,9 @@
             <td>{{ contract.gateway_name }}</td>
           </tr>
           <tr v-if="!paginatedContracts || paginatedContracts.length === 0">
-            <td colspan="10" class="no-data">暂无合约数据</td>
+            <td :colspan="hasOptionData ? 14 : 10" class="no-data">
+              {{ searchQuery ? '未找到匹配的合约' : '暂无合约数据' }}
+            </td>
           </tr>
         </tbody>
       </table>
@@ -74,6 +92,9 @@
     <div class="pagination-controls" v-if="showPagination">
       <div class="pagination-info">
         显示 {{ startItem }}-{{ endItem }} 条，共 {{ totalItems }} 条
+        <span v-if="searchQuery" class="search-count">
+          (共 {{ totalItems }} 条，筛选出 {{ filteredItems }} 条)
+        </span>
       </div>
       <div class="pagination-buttons">
         <button
@@ -120,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 enum Exchange {
     // Chinese
@@ -234,23 +255,62 @@ const props = defineProps<{
 const currentPage = ref(1)
 const pageSize = ref(20)
 const jumpPage = ref(1)
+const searchQuery = ref('')
+
+// Filtered contract data
+const filteredContracts = computed(() => {
+  if (!props.contracts) return []
+  if (!searchQuery.value.trim()) {
+    return props.contracts
+  }
+  const query = searchQuery.value.trim().toLowerCase()
+  return props.contracts.filter(contract => {
+    return (
+      contract.exchange.toLowerCase().includes(query) ||
+      contract.vt_symbol.toLowerCase().includes(query) ||
+      contract.symbol.toLowerCase().includes(query) ||
+      contract.name.toLowerCase().includes(query) ||
+      contract.product.toLowerCase().includes(query) ||
+      getProductText(contract.product).toLowerCase().includes(query)
+    )
+  })
+})
+
+// Reset to the first page when the search term changes
+watch(searchQuery, () => {
+  currentPage.value = 1
+  jumpPage.value = 1
+})
+
+const onSearchInput = () => {
+  // empty temp
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+}
 
 // Calculate the total number of entries
 const totalItems = computed(() => {
   return props.contracts?.length || 0
 })
 
+// Calculate the total number of filter entries
+const filteredItems = computed(() => {
+  return filteredContracts.value.length
+})
+
 // Calculate total number of pages
 const totalPages = computed(() => {
-  return Math.ceil(totalItems.value / pageSize.value)
+  return Math.ceil(filteredItems.value / pageSize.value)
 })
 
 // Calculate the data displayed on the current page
 const paginatedContracts = computed(() => {
-  if(!props.contracts) return []
+  if(filteredItems.value === 0) return []
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
-  return props.contracts.slice(start, end)
+  return filteredContracts.value.slice(start, end)
 })
 
 // Calculate the start and end entries for display
@@ -283,11 +343,11 @@ const visiblePages = computed(() => {
     let start = Math.max(2, currentPage.value - 1)
     let end = Math.min(totalPages.value - 1, currentPage.value + 1)
     
-    if (currentPage.value <= 3) {
-      end = 4
-    } else if (currentPage.value >= totalPages.value - 2) {
-      start = totalPages.value - 3
-    }
+    // if (currentPage.value <= 3) {
+    //   end = 4
+    // } else if (currentPage.value >= totalPages.value - 2) {
+    //   start = totalPages.value - 3
+    // }
     
     if (start > 2) {
       pages.push('...')
@@ -342,7 +402,7 @@ const goToJumpPage = () => {
 
 // Computed property: Check if option data needs to be displayed
 const hasOptionData = computed(() => {
-  return props.contracts?.some(contract => 
+  return filteredContracts.value?.some(contract => 
     contract.option_type || contract.option_strike
   ) ?? false
 })
@@ -510,4 +570,65 @@ const hasOptionData = computed(() => {
 .table-wrapper::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+/* search box */
+.search-container {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.search-input-group {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 40px 12px 16px;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #409eff;
+  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+}
+
+.clear-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #adb5bd;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.clear-btn:hover {
+  background: #6c757d;
+}
+
+.search-count {
+  color: #f56c6c;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
 </style>
