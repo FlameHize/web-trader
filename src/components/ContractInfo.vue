@@ -96,7 +96,7 @@
           (共 {{ totalItems }} 条，筛选出 {{ filteredItems }} 条)
         </span>
       </div>
-      <div class="pagination-buttons">
+      <div class="pagination-buttons-center">
         <button
           @click="prevPage"
           :disabled="currentPage === 1"
@@ -105,15 +105,9 @@
           上一页
         </button>
         <span class="page-numbers">
-          <button
-            v-for="page in visiblePages"
-            :key="page"
-            @click="goToPage(page)"
-            :class="['page-btn', { active: currentPage === page }]"
-            :disabled="page === '...'"
-          >
-          {{ page }}
-          </button>
+          <span class="current-page-info">
+            第 {{ currentPage }} 页 / 共 {{ totalPages }} 页
+          </span>
         </span>
         <button
           @click="nextPage"
@@ -123,7 +117,7 @@
           下一页
         </button>
       </div>
-      <div class="pagination-buttons">
+      <div class="page-jump-container">
         <span class="page-jump">
           跳至
           <input 
@@ -328,45 +322,6 @@ const showPagination = computed(() => {
   return totalItems.value > 0
 })
 
-// Calculate visible page buttons
-const visiblePages = computed(() => {
-  const pages = []
-  const maxVisible = 5
-  
-  if (totalPages.value <= maxVisible) {
-    for (let i = 1; i <= totalPages.value; i++) {
-      pages.push(i)
-    }
-  } else {
-    pages.push(1)
-    
-    let start = Math.max(2, currentPage.value - 1)
-    let end = Math.min(totalPages.value - 1, currentPage.value + 1)
-    
-    // if (currentPage.value <= 3) {
-    //   end = 4
-    // } else if (currentPage.value >= totalPages.value - 2) {
-    //   start = totalPages.value - 3
-    // }
-    
-    if (start > 2) {
-      pages.push('...')
-    }
-    
-    for (let i = start; i <= end; i++) {
-      pages.push(i)
-    }
-    
-    if (end < totalPages.value - 1) {
-      pages.push('...')
-    }
-    
-    pages.push(totalPages.value)
-  }
-  
-  return pages
-})
-
 const prevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--
@@ -414,8 +369,8 @@ const hasOptionData = computed(() => {
 }
 
 .pagination-controls {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   margin-bottom: 15px;
   padding: 10px 0;
@@ -425,6 +380,30 @@ const hasOptionData = computed(() => {
 .pagination-info {
   color: #666;
   font-size: 14px;
+  display: flex;
+}
+
+.pagination-buttons-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.current-page-info {
+  padding: 6px 16px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  border: 1px solid #e8e8e8;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.page-jump-container {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .pagination-buttons {
@@ -436,7 +415,7 @@ const hasOptionData = computed(() => {
 .pagination-btn {
   padding: 6px 12px;
   border: 1px solid #ddd;
-  background: white;
+  background: rgb(255, 255, 255);
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
@@ -444,7 +423,7 @@ const hasOptionData = computed(() => {
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background-color: #f5f5f5;
+  background-color: #409eff;
   border-color: #ccc;
 }
 
@@ -456,34 +435,6 @@ const hasOptionData = computed(() => {
 .page-numbers {
   display: flex;
   gap: 2px;
-}
-
-.page-btn {
-  min-width: 32px;
-  height: 32px;
-  padding: 0 8px;
-  border: 1px solid #ddd;
-  background: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.3s;
-}
-
-.page-btn:hover:not(:disabled) {
-  background-color: #f5f5f5;
-}
-
-.page-btn.active {
-  background-color: #409eff;
-  color: white;
-  border-color: #409eff;
-}
-
-.page-btn:disabled {
-  background: none;
-  border: none;
-  cursor: default;
 }
 
 .table-wrapper {
