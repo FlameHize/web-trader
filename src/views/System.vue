@@ -118,13 +118,15 @@
             <template v-else-if="activeMenu === 'position'">
               <PositionInfo :data="currentData" />
             </template>
-            <template v-else-if="activeMenu === 'contract'">
-              <ContractInfo :contracts="currentData" />
-            </template>
             <template v-else>
               <pre class="json-data">{{ JSON.stringify(currentData, null, 2) }}</pre>
             </template>
           </div>
+        </div>
+
+        <!-- 合约查询组件 -->
+        <div v-else-if="activeMenu === 'contract'" class="contract-query-wrapper">
+          <ContractQuery />
         </div>
         
         <!-- 默认提示 -->
@@ -146,14 +148,12 @@ import axios from 'axios'
 import { defineAsyncComponent } from 'vue'
 const AccountInfo = defineAsyncComponent(() => import('../components/AccountInfo.vue'))
 const PositionInfo = defineAsyncComponent(() => import('../components/PositionInfo.vue'))
-const ContractInfo = defineAsyncComponent(() => import('../components/ContractInfo.vue'))
+const ContractQuery = defineAsyncComponent(() => import('../views/ContractQuery.vue'))
 
 const router = useRouter()
 
-// 1. 定义类型
 type MenuKey = 'account' | 'position' | 'tick' | 'order' | 'trade' | 'contract'
 
-// 响应式数据
 const username = ref(localStorage.getItem('vnpy_username') || '')
 const token = ref(localStorage.getItem('vnpy_token') || '')
 const activeMenu = ref<MenuKey | ''>('') 
@@ -162,7 +162,6 @@ const loading = ref(false)
 const subscribeSymbol = ref('cu2512.SHFE')
 const connectionStatus = ref<'connected' | 'connecting' | 'error' | 'disconnected'>('disconnected')
 
-// 2. 菜单标题映射 - 使用明确的类型
 const menuTitles: Record<MenuKey, string> = {
   account: '账户信息',
   position: '持仓信息',
@@ -172,7 +171,6 @@ const menuTitles: Record<MenuKey, string> = {
   contract: '合约查询'
 }
 
-// 3. 计算当前标题（安全访问）
 const currentTitle = computed(() => {
   if (activeMenu.value && activeMenu.value in menuTitles) {
     return menuTitles[activeMenu.value as MenuKey]
@@ -180,7 +178,6 @@ const currentTitle = computed(() => {
   return '系统面板'
 })
 
-// 状态显示
 const statusText = computed(() => {
   switch (connectionStatus.value) {
     case 'connected': return '已连接'
@@ -192,14 +189,12 @@ const statusText = computed(() => {
 
 const statusClass = computed(() => `status-${connectionStatus.value}`)
 
-// 检查登录状态
 onMounted(() => {
   if (!token.value) {
     router.push('/login')
   }
 })
 
-// 通用API请求函数
 const apiRequest = async (endpoint: string) => {
   if (!token.value) {
     router.push('/login')
@@ -219,7 +214,6 @@ const apiRequest = async (endpoint: string) => {
     console.error(`请求${endpoint}失败:`, err)
     
     if (err.response?.status === 401) {
-      // token过期，跳转登录
       localStorage.removeItem('vnpy_token')
       router.push('/login')
     } else if (err.response?.status === 404) {
@@ -235,7 +229,6 @@ const apiRequest = async (endpoint: string) => {
   }
 }
 
-// 订阅行情
 const subscribeTick = async () => {
   if (!subscribeSymbol.value) return
   
@@ -299,12 +292,10 @@ const fetchTrades = async () => {
 
 const fetchContracts = async () => {
   activeMenu.value = 'contract'
-  const data = await apiRequest('contract')
-  if (data) currentData.value = data
-  console.log(data)
+  currentData.value = null
+  loading.value = false
 }
 
-// 刷新数据
 const refreshData = () => {
   const menuHandlers: Record<MenuKey, Function> = {
     account: fetchAccountInfo,
@@ -320,7 +311,6 @@ const refreshData = () => {
   }
 }
 
-// 退出登录
 const handleLogout = () => {
   localStorage.removeItem('vnpy_token')
   localStorage.removeItem('vnpy_username')
@@ -329,11 +319,6 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
-/* 全局重置 */
-:deep(*) {
-  box-sizing: border-box;
-}
-
 .system-container {
   position: fixed;
   top: 0;
@@ -344,7 +329,6 @@ const handleLogout = () => {
   background: #f5f5f5;
 }
 
-/* 侧边栏样式 */
 .sidebar {
   width: 280px;
   background: #2c3e50;
@@ -464,14 +448,13 @@ const handleLogout = () => {
   background: rgba(231, 76, 60, 0.1);
 }
 
-/* 主内容区样式 */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   overflow: hidden;
-  width: calc(100vw - 280px); /* 减去侧边栏宽度 */
+  width: calc(100vw - 280px); 
 }
 
 .content-header {
@@ -520,10 +503,9 @@ const handleLogout = () => {
   flex: 1;
   padding: 30px;
   overflow-y: auto;
-  min-height: 0; /* 重要：允许flex item收缩 */
+  min-height: 0; 
 }
 
-/* 加载状态 */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -546,7 +528,6 @@ const handleLogout = () => {
   100% { transform: rotate(360deg); }
 }
 
-/* 数据展示 */
 .data-display {
   background: white;
   border-radius: 8px;
@@ -599,7 +580,6 @@ const handleLogout = () => {
   overflow-y: auto;
 }
 
-/* 欢迎消息 */
 .welcome-message {
   display: flex;
   flex-direction: column;
@@ -620,7 +600,10 @@ const handleLogout = () => {
   margin-bottom: 10px;
 }
 
-/* 确保表格内容可以滚动 */
+:deep(*) {
+  box-sizing: border-box;
+}
+
 :deep(.contract-table-container) {
   height: 100%;
   display: flex;
@@ -634,5 +617,11 @@ const handleLogout = () => {
 
 :deep(table) {
   height: 100%;
+}
+
+.contract-query-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 </style>
