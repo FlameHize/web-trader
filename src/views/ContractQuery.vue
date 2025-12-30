@@ -1,19 +1,13 @@
 <template>
   <div class="contract-query-container">
     <div class="query-controls">
-      <div class="search-input-group">
-        <input
-          v-model="searchKeyword"
-          type="text"
-          placeholder="输入合约代码、交易所或名称，留空查询所有"
-          class="search-input"
-          @keyup.enter="handleSearch"
-        />
-        <button @click="clearSearch" class="clear-search-btn" v-if="searchKeyword">
-          ×
-        </button>
-      </div>
-      
+      <input
+        v-model="searchKeyword"
+        type="text"
+        placeholder="输入合约代码、交易所或名称，留空则查询所有合约"
+        class="search-input"
+        @keyup.enter="handleSearch"
+      />      
       <button 
         class="search-action-btn"
         @click="handleSearch"
@@ -32,6 +26,7 @@
       </button>
     </div>
     
+    <!-- Directly use the contract components -->
     <ContractTable 
       :contracts="allContracts"
       :is-loading="isSearching"
@@ -58,20 +53,14 @@ const getToken = (): string => {
   return localStorage.getItem('vnpy_token') || ''
 }
 
-const clearSearch = () => {
-  searchKeyword.value = ''
-}
-
 const handleSearch = async () => {
   const token = getToken()
   if (!token) {
     router.push('/login')
     return
   }
-  
   isSearching.value = true
   hasSearched.value = true
-  
   try {
     const response = await axios.get('/api/contract', {
       headers: {
@@ -79,18 +68,14 @@ const handleSearch = async () => {
       },
       timeout: 30000
     })
-    
     if (response.data && Array.isArray(response.data)) {
       allContracts.value = response.data
-      console.log(`查询完成，共加载 ${allContracts.value.length} 条合约记录`)
     } else {
       allContracts.value = []
-      console.warn('接口返回数据格式不正确')
+      alert('接口返回数据格式不正确')
     }
   } catch (error: any) {
-    console.error('查询合约失败:', error)
     allContracts.value = []
-    
     if (error.response?.status === 401) {
       localStorage.removeItem('vnpy_token')
       router.push('/login')
@@ -133,6 +118,8 @@ const refreshData = () => {
 }
 
 .search-input {
+  flex: 1;
+  position: relative;
   width: 100%;
   padding: 10px 40px 10px 16px;
   border: 2px solid #dcdfe6;
@@ -146,30 +133,6 @@ const refreshData = () => {
   outline: none;
   border-color: #409eff;
   box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
-}
-
-.clear-search-btn {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #c0c4cc;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s;
-}
-
-.clear-search-btn:hover {
-  background: #909399;
 }
 
 .search-action-btn {
